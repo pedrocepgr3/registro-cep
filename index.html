@@ -85,39 +85,42 @@
 
     // Envío de datos
     document.getElementById('formAsesoria').onsubmit = function(e) {
-        e.preventDefault();
+    e.preventDefault();
 
-        const ahora = new Date();
-        const fechaFormateada = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString();
+    const ahora = new Date();
+    const fechaFormateada = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString();
 
-        const payload = {
-            asesoria: document.getElementById('asesoria').value,
-            tipo_registro: document.getElementById('tipo_registro').value, // Variable actualizada
-            fecha_hora: fechaFormateada,
-            lat: document.getElementById('lat').value,
-            lng: document.getElementById('lng').value
-        };
-
-        if(!payload.lat) {
-            alert("Error: Espera a que el GPS te localice o toca el mapa.");
-            return;
-        }
-
-        // REEMPLAZA ESTA URL con la de tu Google Apps Script
-        const urlScript = "TU_URL_DE_APPS_SCRIPT_AQUI";
-
-        fetch(urlScript, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(payload),
-            headers: { "Content-Type": "application/json" }
-        })
-        .then(() => {
-            alert("✅ Registro de " + payload.tipo_registro + " guardado.");
-            document.getElementById('formAsesoria').reset();
-        })
-        .catch(err => alert("Error al guardar: " + err));
+    const payload = {
+        asesoria: document.getElementById('asesoria').value,
+        movimiento: document.getElementById('tipo_movimiento').value,
+        fecha_hora: fechaFormateada,
+        lat: document.getElementById('lat').value,
+        lng: document.getElementById('lng').value
     };
+
+    if(!payload.lat) {
+        alert("Error: No hay datos de GPS.");
+        return;
+    }
+
+    // --- CAMBIO AQUÍ: Envío a Google Sheets ---
+    const urlScript = "https://script.google.com/macros/s/AKfycbwWGC-KJaavYT4l8vjDwFpYApiuTNm4taH42Y5wEfzC3o5ZYV-hNh9PS91hK4kNKX-J/exec";
+
+    fetch(urlScript, {
+        method: 'POST',
+        mode: 'no-cors', // Necesario para Google Script
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(() => {
+        alert("✅ Registro guardado en Google Sheets correctamente.");
+        document.getElementById('formAsesoria').reset(); // Limpia el formulario
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("❌ Error al conectar con el servidor.");
+    });
+};
 </script>
 </body>
 </html>
