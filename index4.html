@@ -108,8 +108,25 @@
             fecha_hora: new Date().toLocaleString('es-ES'),
             //lat: parseFloat(document.getElementById('lat').value),
             //lng: parseFloat(document.getElementById('lng').value)
-            lat: document.getElementById('lat').valueAsNumber,
-            lng: document.getElementById('lng').valueAsNumber
+            //lat: document.getElementById('lat').valueAsNumber,
+            //lng: document.getElementById('lng').valueAsNumber
+            lat: parseFloat(document.getElementById('lat').value.replace(',', '.')),
+            lng: parseFloat(document.getElementById('lng').value.replace(',', '.'))
+};
+ 
+
+Explicación:
+
+    document.getElementById('lat').value → obtiene el valor como cadena.
+
+    .replace(',', '.') → convierte la coma en punto.
+
+    parseFloat(...) → convierte la cadena corregida a número decimal. 
+
+Así evitarás errores de tipo y datos mal interpretados.
+javascript parseFloat en valor de input formulario
+✅ Código correcto
+Explicación
         };
 
         const urlScript = "https://script.google.com/macros/s/AKfycbyywxwIdSDsTRlZMzpwo_Zg6u5sQZNyVhdfADZegLQagahxjJSiU7s70-sk-MYYGw/exec";
