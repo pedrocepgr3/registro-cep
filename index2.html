@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Asesoría v2</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; max-width: 500px; margin: auto; background-color: #f0f2f5; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; margin-top: 0; text-align: center; }
+        #map { height: 200px; width: 100%; border-radius: 10px; margin: 15px 0; border: 1px solid #ddd; }
+        .campo { margin-bottom: 20px; display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 8px; color: #444; }
+        input, select { padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; outline: none; }
+        input:focus, select:focus { border-color: #1a73e8; }
+        
+        button { background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; transition: 0.3s; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .status { font-size: 13px; color: #666; text-align: center; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Control de Asistencia</h2>
+    
+    <form id="formAsesoria">
+        <div class="campo">
+            <label for="asesoria">Asesoría:</label>
+            <input type="text" id="asesoria" name="asesoria" placeholder="Introduce el ID asesoría" required>
+        </div>
+
+        <div class="campo">
+            <label for="tipo_registro">Tipo de Registro:</label>
+            <select id="tipo_registro" name="tipo_registro" required>
+                <option value="Entrada" selected>Entrada</option>
+                <option value="Salida">Salida</option>
+            </select>
+        </div>
+
+        <div id="map"></div>
+
+        <input type="hidden" id="lat" name="lat">
+        <input type="hidden" id="lng" name="lng">
+
+        <div class="status" id="status_gps">📍 Buscando señal GPS...</div>
+        <br>
+        <button type="submit" id="btnEnviar">Enviar Registro</button>
+    </form>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    let marcador;
+    const btn = document.getElementById('btnEnviar');
+
+    // Función interna para capturar coordenadas en los campos ocultos
+    function updateHiddenFields(lat, lng) {
+        document.getElementById('lat').value = lat;
+        document.getElementById('lng').value = lng;
+        document.getElementById('status_gps').innerHTML = `✅ Ubicación fijada automáticamente`;
+    }
+
+    map.locate({setView: true, maxZoom: 17});
+
+    map.on('locationfound', function(e) {
+        updateHiddenFields(e.latlng.lat, e.latlng.lng);
+        if (marcador) map.removeLayer(marcador);
+        marcador = L.marker(e.latlng).addTo(map);
+    });
+
+    map.on('click', function(e) {
+        updateHiddenFields(e.latlng.lat, e.latlng.lng);
+        if (marcador) { marcador.setLatLng(e.latlng); } 
+        else { marcador = L.marker(e.latlng).addTo(map); }
+    });
+
+    document.getElementById('formAsesoria').onsubmit = function(e) {
+        e.preventDefault();
+
+        const lat = document.getElementById('lat').value;
+        const lng = document.getElementById('lng').value;
+
+        if(!lat) {
+            alert("Espera a recibir la señal GPS o toca el mapa.");
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Guardando...";
+
+        const payload = {
+            asesoria: document.getElementById('asesoria').value,
+            tipo_registro: document.getElementById('tipo_registro').value,
+            fecha_hora: new Date().toLocaleString('es-ES'),
+            lat: lat,
+            lng: lng
+        };
+
+        const urlScript = "https://script.google.com/macros/s/AKfycbzVaZAXN9dE2W5hA9QoCFSHyXQV7mrFnJB4MTFYCUNWlM_YUHGQrCCVtuzSmWJAA6M/exec";
+
+        fetch(urlScript, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(() => {
+            alert("✅ Registro de " + payload.asesoria + " guardado con éxito.");
+            document.getElementById('formAsesoria').reset();
+            if (marcador) map.removeLayer(marcador);
+            document.getElementById('status_gps').innerText = "📍 Buscando señal GPS...";
+        })
+        .catch(error => {
+            alert("❌ Error al enviar los datos.");
+            console.error(error);
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerText = "Enviar Registro";
+        });
+    };
+</script>
+</body>
+</html>
