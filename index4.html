@@ -127,7 +127,8 @@
         const payload = {
             asesoria: document.getElementById('asesoria').value,
             tipo_registro: document.getElementById('tipo_registro').value,
-            fecha_hora: new Date().toLocaleString('es-ES'),
+            //fecha_hora: new Date().toLocaleString('es-ES'),
+            fecha_hora: document.getElementById('fecha_hora').value,
             lat: parseFloat(document.getElementById('lat').value.replace(',', '.')),
             lng: parseFloat(document.getElementById('lng').value.replace(',', '.'))
         };
