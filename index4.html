@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Asesoría v4</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; max-width: 400px; margin: auto; background-color: #f0f2f5; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; margin-top: 0; text-align: center; font-size: 1.4rem; }
+        .campo { margin-bottom: 18px; display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 6px; color: #444; font-size: 0.9rem; }
+        input, select { padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; outline: none; background-color: white; }
+        
+        input[readonly] { background-color: #f9f9f9; color: #555; cursor: not-allowed; border-color: #eee; font-family: monospace; }
+        
+        button { background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-top: 10px; }
+        button:disabled { background: #ccc; }
+        .status { font-size: 12px; color: #d93025; text-align: center; margin-top: 10px; font-weight: bold; }
+        .success-text { color: #1e8e3e; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Control de Asistencia</h2>
+    
+    <form id="formAsesoria">
+        <div class="campo">
+            <label for="asesoria">Asesoría:</label>
+            <input type="text" id="asesoria" name="asesoria" placeholder="ID asesoría" required>
+        </div>
+
+        <div class="campo">
+            <label for="tipo_registro">Tipo de Registro:</label>
+            <select id="tipo_registro" name="tipo_registro" required>
+                <option value="Entrada" selected>Entrada</option>
+                <option value="Salida">Salida</option>
+            </select>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <div class="campo">
+            <label>Latitud (-90 a 90):</label>
+            <input type="number" id="lat" name="lat" step="0.00001" readonly required>
+        </div>
+
+        <div class="campo">
+            <label>Longitud (-180 a 180):</label>
+            <input type="number" id="lng" name="lng" step="0.00001" readonly required>
+        </div>
+
+        <div class="status" id="status_gps">Iniciando GPS...</div>
+        
+        <button type="submit" id="btnEnviar" disabled>Esperando GPS...</button>
+    </form>
+</div>
+
+<script>
+    const btn = document.getElementById('btnEnviar');
+    const statusGps = document.getElementById('status_gps');
+
+    function obtenerUbicacion() {
+        if (!navigator.geolocation) {
+            statusGps.innerText = "❌ No soportado por el navegador.";
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                let latitud = pos.coords.latitude;
+                let longitud = pos.coords.longitude;
+
+                // Validación de rangos y formateo a 5 decimales
+                if (latitud >= -90 && latitud <= 90 && longitud >= -180 && longitud <= 180) {
+                    document.getElementById('lat').value = latitud.toFixed(5);
+                    document.getElementById('lng').value = longitud.toFixed(5);
+                    
+                    statusGps.innerText = "✅ Ubicación válida y fijada";
+                    statusGps.className = "status success-text";
+                    btn.disabled = false;
+                    btn.innerText = "Enviar Registro";
+                } else {
+                    statusGps.innerText = "❌ Coordenadas fuera de rango.";
+                }
+            },
+            (err) => {
+                statusGps.innerText = "❌ Error: Activa el GPS y recarga.";
+                console.error(err);
+            }, 
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }
+
+    window.onload = obtenerUbicacion;
+
+    document.getElementById('formAsesoria').onsubmit = function(e) {
+        e.preventDefault();
+
+        btn.disabled = true;
+        btn.innerText = "Enviando...";
+
+        // Convertimos a número decimal puro antes de enviar
+        const payload = {
+            asesoria: document.getElementById('asesoria').value,
+            tipo_registro: document.getElementById('tipo_registro').value,
+            fecha_hora: new Date().toLocaleString('es-ES'),
+            lat: parseFloat(document.getElementById('lat').value),
+            lng: parseFloat(document.getElementById('lng').value)
+        };
+
+        const urlScript = "https://script.google.com/macros/s/AKfycbzVaZAXN9dE2W5hA9QoCFSHyXQV7mrFnJB4MTFYCUNWlM_YUHGQrCCVtuzSmWJAA6M/exec";
+
+        fetch(urlScript, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(() => {
+            alert("✅ Registro guardado.");
+            document.getElementById('formAsesoria').reset();
+            btn.disabled = true;
+            btn.innerText = "Esperando GPS...";
+            obtenerUbicacion();
+        })
+        .catch(error => {
+            alert("❌ Error de conexión.");
+            btn.disabled = false;
+            btn.innerText = "Reintentar Envío";
+        });
+    };
+</script>
+</body>
+</html>
