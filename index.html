@@ -92,7 +92,7 @@
 
     const payload = {
         asesoria: document.getElementById('asesoria').value,
-        registro: document.getElementById('tipo_registro').value,
+        tipo_registro: document.getElementById('tipo_registro').value,
         fecha_hora: fechaFormateada,
         lat: document.getElementById('lat').value,
         lng: document.getElementById('lng').value
@@ -113,7 +113,7 @@
         headers: { "Content-Type": "application/json" }
     })
     .then(() => {
-        alert("✅ Registro guardado en Google Sheets correctamente.");
+        alert("✅ Registro guardado en Drive correctamente.");
         document.getElementById('formAsesoria').reset(); // Limpia el formulario
     })
     .catch(error => {
