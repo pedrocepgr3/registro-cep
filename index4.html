@@ -43,12 +43,12 @@
 
         <div class="campo">
             <label>Latitud:</label>
-            <input type="number" id="lat" name="lat" step="0.00001" readonly required>
+            <input type="number" id="lat" name="lat" step="any" readonly required>
         </div>
 
         <div class="campo">
             <label>Longitud:</label>
-            <input type="number" id="lng" name="lng" step="0.00001" readonly required>
+            <input type="number" id="lng" name="lng" step="any" readonly required>
         </div>
 
         <div class="status" id="status_gps">Iniciando GPS...</div>
@@ -106,8 +106,10 @@
             asesoria: document.getElementById('asesoria').value,
             tipo_registro: document.getElementById('tipo_registro').value,
             fecha_hora: new Date().toLocaleString('es-ES'),
-            lat: parseFloat(document.getElementById('lat').value),
-            lng: parseFloat(document.getElementById('lng').value)
+            //lat: parseFloat(document.getElementById('lat').value),
+            //lng: parseFloat(document.getElementById('lng').value)
+            lat: document.getElementById('lat').valueAsNumber,
+            lng: document.getElementById('lng').valueAsNumber
         };
 
         const urlScript = "https://script.google.com/macros/s/AKfycbyywxwIdSDsTRlZMzpwo_Zg6u5sQZNyVhdfADZegLQagahxjJSiU7s70-sk-MYYGw/exec";
