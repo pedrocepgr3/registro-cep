@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Asesoría v4</title>
+    <title>Registro de sesión v4</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 20px; max-width: 400px; margin: auto; background-color: #f0f2f5; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
@@ -23,31 +23,31 @@
 <body>
 
 <div class="card">
-    <h2>Control de Asistencia</h2>
+    <h2>Registro de sesión</h2>
     
     <form id="formAsesoria">
         <div class="campo">
-            <label for="asesoria">Asesoría:</label>
+            <label for="asesoria">ID Asesoría:</label>
             <input type="text" id="asesoria" name="asesoria" placeholder="ID asesoría" required>
         </div>
 
         <div class="campo">
             <label for="tipo_registro">Tipo de Registro:</label>
             <select id="tipo_registro" name="tipo_registro" required>
-                <option value="Entrada" selected>Entrada</option>
-                <option value="Salida">Salida</option>
+                <option value="Inicio" selected>Inicio</option>
+                <option value="Fin">Fin</option>
             </select>
         </div>
 
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
         <div class="campo">
-            <label>Latitud (-90 a 90):</label>
+            <label>Latitud:</label>
             <input type="number" id="lat" name="lat" step="0.00001" readonly required>
         </div>
 
         <div class="campo">
-            <label>Longitud (-180 a 180):</label>
+            <label>Longitud:</label>
             <input type="number" id="lng" name="lng" step="0.00001" readonly required>
         </div>
 
