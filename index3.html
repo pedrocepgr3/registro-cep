@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Asesoría v3</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; max-width: 400px; margin: auto; background-color: #f0f2f5; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        h2 { color: #1a73e8; margin-top: 0; text-align: center; font-size: 1.4rem; }
+        .campo { margin-bottom: 18px; display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 6px; color: #444; font-size: 0.9rem; }
+        input, select { padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; outline: none; background-color: white; }
+        
+        /* Estilo para campos que no se pueden editar */
+        input[readonly] { background-color: #f9f9f9; color: #666; cursor: not-allowed; border-color: #eee; }
+        
+        button { background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-top: 10px; }
+        button:disabled { background: #ccc; }
+        .status { font-size: 12px; color: #d93025; text-align: center; margin-top: 10px; font-weight: bold; }
+        .success-text { color: #1e8e3e; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Control de Asistencia</h2>
+    
+    <form id="formAsesoria">
+        <div class="campo">
+            <label for="asesoria">Asesoría:</label>
+            <input type="text" id="asesoria" name="asesoria" placeholder="ID asesoría" required>
+        </div>
+
+        <div class="campo">
+            <label for="tipo_registro">Tipo de Registro:</label>
+            <select id="tipo_registro" name="tipo_registro" required>
+                <option value="Entrada" selected>Entrada</option>
+                <option value="Salida">Salida</option>
+            </select>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <div class="campo">
+            <label>Latitud detectada:</label>
+            <input type="text" id="lat" name="lat" readonly placeholder="Buscando..." required>
+        </div>
+
+        <div class="campo">
+            <label>Longitud detectada:</label>
+            <input type="text" id="lng" name="lng" readonly placeholder="Buscando..." required>
+        </div>
+
+        <div class="status" id="status_gps">Iniciando GPS...</div>
+        
+        <button type="submit" id="btnEnviar" disabled>Esperando GPS...</button>
+    </form>
+</div>
+
+<script>
+    const btn = document.getElementById('btnEnviar');
+    const statusGps = document.getElementById('status_gps');
+
+    // Función para obtener la ubicación automáticamente al cargar
+    function obtenerUbicacion() {
+        if (!navigator.geolocation) {
+            statusGps.innerText = "❌ Tu navegador no soporta GPS.";
+            return;
+        }
+
+        const opciones = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        };
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                document.getElementById('lat').value = pos.coords.latitude.toFixed(6);
+                document.getElementById('lng').value = pos.coords.longitude.toFixed(6);
+                
+                statusGps.innerText = "✅ Ubicación obtenida correctamente";
+                statusGps.classList.add("success-text");
+                
+                btn.disabled = false;
+                btn.innerText = "Enviar Registro";
+            },
+            (err) => {
+                statusGps.innerText = "❌ Error: Activa el GPS y recarga.";
+                console.warn(`ERROR(${err.code}): ${err.message}`);
+            }, 
+            opciones
+        );
+    }
+
+    // Ejecutar al cargar la página
+    window.onload = obtenerUbicacion;
+
+    document.getElementById('formAsesoria').onsubmit = function(e) {
+        e.preventDefault();
+
+        btn.disabled = true;
+        btn.innerText = "Enviando...";
+
+        const payload = {
+            asesoria: document.getElementById('asesoria').value,
+            tipo_registro: document.getElementById('tipo_registro').value,
+            fecha_hora: new Date().toLocaleString('es-ES'),
+            lat: document.getElementById('lat').value,
+            lng: document.getElementById('lng').value
+        };
+
+        const urlScript = "https://script.google.com/macros/s/AKfycbzVaZAXN9dE2W5hA9QoCFSHyXQV7mrFnJB4MTFYCUNWlM_YUHGQrCCVtuzSmWJAA6M/exec";
+
+        fetch(urlScript, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(() => {
+            alert("✅ Registro guardado con éxito.");
+            document.getElementById('formAsesoria').reset();
+            obtenerUbicacion(); // Vuelve a pedir la ubicación para el siguiente registro
+        })
+        .catch(error => {
+            alert("❌ Error al conectar con Google Sheets.");
+            btn.disabled = false;
+            btn.innerText = "Reintentar Envío";
+        });
+    };
+</script>
+</body>
+</html>
