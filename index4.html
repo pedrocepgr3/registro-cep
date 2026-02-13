@@ -20,6 +20,19 @@
         .status { font-size: 12px; color: #d93025; text-align: center; margin-top: 10px; font-weight: bold; }
         .success-text { color: #1e8e3e; }
     </style>
+    <script>
+    function setDateTimeLocalNow() {
+      const now = new Date();
+      const formatted = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + 'T' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('fecha-hora').value = formatted;
+    }
+
+    document.addEventListener('DOMContentLoaded', setDateTimeLocalNow);
+    </script>
 </head>
 <body>
 
@@ -41,6 +54,13 @@
             </select>
         </div>
 
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <div class="campo">
+            <label>Fecha/hora:</label>
+            <input type="datetime-local" id="fecha_hora" name="fecha_hora" step="any" readonly required>
+        </div>
+        
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
         <div class="campo">
