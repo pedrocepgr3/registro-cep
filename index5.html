@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de sesión v4</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; max-width: 400px; margin: auto; background-color: #f0f2f5; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        h3 { color: #444; margin-top: 0; text-align: center; font-size: 0.7rem; }
+        h2 { color: #1a73e8; margin-top: 0; text-align: center; font-size: 1.4rem; }
+        .campo { margin-bottom: 18px; display: flex; flex-direction: column; }
+        label { font-weight: 600; margin-bottom: 6px; color: #444; font-size: 0.9rem; }
+        input, select { padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; outline: none; background-color: white; }
+        
+        input[readonly] { background-color: #f9f9f9; color: #555; cursor: not-allowed; border-color: #eee; font-family: monospace; }
+        
+        button { background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-top: 10px; }
+        button:disabled { background: #ccc; }
+        .status { font-size: 12px; color: #d93025; text-align: center; margin-top: 10px; font-weight: bold; }
+        .success-text { color: #1e8e3e; }
+    </style>
+    <script>
+    function setDateTimeLocalNow() {
+      const now = new Date();
+      const formatted = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + 'T' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0') + ':' +
+        String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('fecha_hora').value = formatted;
+    }
+
+    function cargarAsesoriaDesdeURL() {
+      const params = new URLSearchParams(window.location.search);
+      const asesoria = params.get('asesoria');
+      const inputAsesoria = document.getElementById('asesoria');
+
+      if (asesoria) {
+        inputAsesoria.value = asesoria;
+        inputAsesoria.readOnly = true; // Si viene por URL, lo bloqueamos
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setDateTimeLocalNow();
+      cargarAsesoriaDesdeURL();
+    });
+    </script>
+</head>
+<body>
+
+<div class="card">
+    <h2>Registro de sesión</h2>
+    <h3>CEP Guadix</h3>
+    
+    <form id="formAsesoria">
+        <div class="campo">
+            <label for="asesoria">ID Asesoría:</label>
+            <input type="text" id="asesoria" name="asesoria" placeholder="ID asesoría" required>
+        </div>
+
+        <div class="campo">
+            <label for="tipo_registro">Tipo de Registro:</label>
+            <select id="tipo_registro" name="tipo_registro" required>
+                <option value="Inicio" selected>Inicio</option>
+                <option value="Fin">Fin</option>
+            </select>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <div class="campo">
+            <label>Fecha/hora:</label>
+            <input type="datetime-local-input" id="fecha_hora" name="fecha_hora" step="any" readonly required>
+        </div>
+        
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <div class="campo">
+            <label>Latitud:</label>
+            <input type="number" id="lat" name="lat" step="any" readonly required>
+        </div>
+
+        <div class="campo">
+            <label>Longitud:</label>
+            <input type="number" id="lng" name="lng" step="any" readonly required>
+        </div>
+
+        <div class="status" id="status_gps">Iniciando GPS...</div>
+        
+        <button type="submit" id="btnEnviar" disabled>Esperando GPS...</button>
+    </form>
+</div>
+
+<script>
+    const btn = document.getElementById('btnEnviar');
+    const statusGps = document.getElementById('status_gps');
+
+    function obtenerUbicacion() {
+        if (!navigator.geolocation) {
+            statusGps.innerText = "❌ No soportado por el navegador.";
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                let latitud = pos.coords.latitude;
+                let longitud = pos.coords.longitude;
+
+                if (latitud >= -90 && latitud <= 90 && longitud >= -180 && longitud <= 180) {
+                    document.getElementById('lat').value = latitud.toFixed(5);
+                    document.getElementById('lng').value = longitud.toFixed(5);
+                    
+                    statusGps.innerText = "✅ Ubicación válida y fijada";
+                    statusGps.className = "status success-text";
+                    btn.disabled = false;
+                    btn.innerText = "Enviar Registro";
+                } else {
+                    statusGps.innerText = "❌ Coordenadas fuera de rango.";
+                }
+            },
+            (err) => {
+                statusGps.innerText = "❌ Error: Activa el GPS y recarga.";
+                console.error(err);
+            }, 
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    }
+
+    window.onload = obtenerUbicacion;
+
+    document.getElementById('formAsesoria').onsubmit = function(e) {
+        e.preventDefault();
+
+        btn.disabled = true;
+        btn.innerText = "Enviando...";
+
+        const payload = {
+            asesoria: document.getElementById('asesoria').value,
+            tipo_registro: document.getElementById('tipo_registro').value,
+            fecha_hora: document.getElementById('fecha_hora').value,
+            lat: parseFloat(document.getElementById('lat').value.replace(',', '.')),
+            lng: parseFloat(document.getElementById('lng').value.replace(',', '.'))
+        };
+
+        const urlScript = "https://script.google.com/macros/s/AKfycbx49wZUlASO7CXaU7uDnnUBEH8h-Y8_OwU5iOi0hp3PG3duC9XDjs2ZkFc2_PYGQroL/exec";
+
+        fetch(urlScript, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "application/json" }
+        })
+        .then(() => {
+            alert("✅ Registro guardado.");
+            document.getElementById('formAsesoria').reset();
+            btn.disabled = true;
+            btn.innerText = "Esperando GPS...";
+            // Restaurar el valor de asesoría desde la URL si existe
+            cargarAsesoriaDesdeURL();
+            obtenerUbicacion();
+        })
+        .catch(error => {
+            alert("❌ Error de conexión.");
+            btn.disabled = false;
+            btn.innerText = "Reintentar Envío";
+        });
+    };
+</script>
+</body>
+</html>
